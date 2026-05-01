@@ -29,6 +29,27 @@ html, body, h1, h2, h3, p, div, span {
     margin: 0;
     max-width: 100%;
 }
+
+.title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 32px;
+    color: #4E4E61;
+}
+
+.subtitle {
+    font-size: 20px;
+    font-weight: 500;
+    color: #4E4E61;
+    margin-bottom: 8px;
+}
+
+.text {
+    font-size: 16px;
+    font-weight: 300;
+    color: #7E7E84;
+    margin-bottom: 32px;
+}
             
 [data-testid="stButton"] button {
     background-color: #7F7FA4;
@@ -45,19 +66,24 @@ html, body, h1, h2, h3, p, div, span {
 </style>
 """, unsafe_allow_html=True)
 
-st.set_page_config(page_title='How It Works', page_icon='❔')
+st.set_page_config(page_title='How It Works', page_icon='❓')
 
-st.markdown('<p style="font-size:32px; font-weight:400; color:#4E4E61">How PairCheck Works?</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:20px; font-weight:400; color:#4E4E61; margin-top:48px">1. Upload Documents</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:16px; font-weight:300; color:#7E7E84; margin-top:8px">Upload two documents that you want to compare or paste text directly. The system accepts text input or supported document files for analysis.</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:20px; font-weight:400; color:#4E4E61; margin-top:32px">2. Text Preprocessing</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:16px; font-weight:300; color:#7E7E84; margin-top:8px">Both documents are cleaned and normalized through lowercase conversion, punctuation removal, and stopwords filtering. This helps improve consistency before similarity analysis.</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:20px; font-weight:400; color:#4E4E61; margin-top:32px">3. Feature Extraction</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:16px; font-weight:300; color:#7E7E84; margin-top:8px">The system extracts multiple similarity features such as cosine similarity, Jaccard similarity, and n-gram overlap. These features represent how closely the two documents are related.</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:20px; font-weight:400; color:#4E4E61; margin-top:32px">4. Similarity Analysis</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:16px; font-weight:300; color:#7E7E84; margin-top:8px">Extracted similarity features are analyzed by a trained machine learning model. The model determines whether the document pair is likely plagiarized or not.</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:20px; font-weight:400; color:#4E4E61; margin-top:32px">5. Result and Confidence</p>', unsafe_allow_html=True)
-st.markdown('<p style="font-size:16px; font-weight:300; color:#7E7E84; margin-top:8px; margin-bottom:40px">The final prediction is displayed as similar or non-similar. A confidence score is also provided to indicate prediction certainty.</p>', unsafe_allow_html=True)
+st.markdown('<div class="title">❓ How PairCheck Works?</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="subtitle">1. Upload Documents</div>', unsafe_allow_html=True)
+st.markdown('<div class="text">Upload two documents that you want to compare or paste text directly. The system accepts text input or supported document files for analysis.</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="subtitle">2. Text Preprocessing</div>', unsafe_allow_html=True)
+st.markdown('<div class="text">Both documents are cleaned and normalized through lowercase conversion, punctuation removal, stopwords filtering, lemmatizing, and MinMax normalization. This helps improve consistency before similarity analysis.</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="subtitle">3. Feature Extraction</div>', unsafe_allow_html=True)
+st.markdown('<div class="text">The system extracts multiple similarity features such as cosine similarity, Jaccard similarity, Levenshtein distance, n-gram overlap, and Sentence-BERT. These features represent how closely the two documents are related.</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="subtitle">4. Similarity Analysis</div>', unsafe_allow_html=True)
+st.markdown('<div class="text">Extracted similarity features are analyzed by a Logistic Regression model. The model determines whether the document pair is likely plagiarized or not.</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="subtitle">5. Result and Confidence</div>', unsafe_allow_html=True)
+st.markdown('<div class="text" style="margin-bottom:40px">The final prediction is displayed as similar or non-similar. A confidence score is also provided to indicate prediction certainty.</div>', unsafe_allow_html=True)
 
 if st.button("Explore Data"):
     st.switch_page("pages/2_Dataset_Exploration.py")
