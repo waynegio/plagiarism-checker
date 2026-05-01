@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
-
+train_data = pd.read_excel('./MSRParaphraseCorpus/msr_paraphrase_train.xlsx')
+test_data = pd.read_excel('./MSRParaphraseCorpus/msr_paraphrase_test.xlsx')
 
 st.markdown("""
 <style>
