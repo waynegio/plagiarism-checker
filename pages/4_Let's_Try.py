@@ -1,3 +1,5 @@
+import pickle
+import os
 import streamlit as st
 
 st.markdown("""
@@ -38,7 +40,7 @@ html, body, h1, h2, h3, p, div, span {
     width: 210px;
     height: 55px;
 }
-            
+
 [data-testid="stVerticalBlock"] {
     align-items: center;
 }
@@ -67,13 +69,48 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown('<p style="font-size:20px; font-weight:400; color:#4E4E61; margin-bottom:12px">Document 1</p>', unsafe_allow_html=True)
     text1 = st.text_area('', height=300, placeholder="Type your text...", label_visibility="collapsed", key='doc1')
-    # document1 = st.file_uploader('Upload Document 1')
 with col2:
     st.markdown('<p style="font-size:20px; font-weight:400; color:#4E4E61; margin-bottom:12px">Document 2</p>', unsafe_allow_html=True)
     text2 = st.text_area('', height=300, placeholder="Type your text...", label_visibility="collapsed", key='doc2')
-    # document2 = st.file_uploader('Upload Document 2')
 
 st.markdown('<p style="margin-bottom:32px"></p>', unsafe_allow_html=True)
+
 if st.button('Check Similarity'):
-    st.write('Result: Similar')
-    st.write('Confidence: 80%')
+    if not text1.strip() or not text2.strip():
+        st.warning('Please enter text in both fields.')
+    else:
+        with st.spinner('Analyzing similarity...'):
+            model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'model', 'plagiarism_model.pkl')
+            with open(model_path, 'rb') as f:
+                artefacts = pickle.load(f)
+
+            tfidf_vec = artefacts['tfidf_vectoriser']
+            w2v_data = {'vectors': artefacts['w2v_vectors'], 'dim': artefacts['w2v_dim']}
+
+            from preprocessing import extract_features
+            features = extract_features(text1, text2, tfidf_vec, w2v_data)
+            score = float(features[0].mean())
+
+        st.markdown(f'''
+        <div style="
+            background: #FEFEFF;
+            border: 1px solid #C7C7D2;
+            border-radius: 24px;
+            padding: 32px;
+            margin-top: 8px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        ">
+            <p style="font-size:16px; color:#4E4E61; margin-bottom:16px">
+                Similarity Score
+            </p>
+            <p style="font-size:56px; font-weight:600; color:#7F7FA4; margin:0">
+                {score * 100:.1f}%
+            </p>
+            <p style="font-size:14px; color:#7F7FA4; margin-top:8px">
+                {"Paraphrase detected" if score >= 0.5 else "Not a paraphrase"}
+            </p>
+        </div>
+        ''', unsafe_allow_html=True)

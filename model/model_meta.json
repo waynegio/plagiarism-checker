@@ -1,0 +1,13 @@
+{
+  "feature_names": [
+    "cosine_tfidf",
+    "jaccard",
+    "levenshtein",
+    "ngram_3",
+    "sbert",
+    "word2vec",
+    "glove"
+  ],
+  "model_type": "LogisticRegression",
+  "description": "Plagiarism similarity scores predicted by Logistic Regression trained on: cosine_tfidf, jaccard, levenshtein, ngram_3, sbert, word2vec, glove."
+}
