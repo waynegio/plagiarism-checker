@@ -1,16 +1,16 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import string
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
-from nltk.tag import pos_tag
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import Levenshtein
-from sentence_transformers import SentenceTransformer, util
-from nltk.util import ngrams
+from preprocessing import (
+    preprocess_cosine_jaccard,
+    preprocess_levenshtein_trigram,
+    preprocess_sbert,
+    tfidf_cosine,
+    jaccard_similarity,
+    levenshtein_similarity,
+    trigram_similarity,
+    sbert_similarity
+)
 from sklearn.preprocessing import MinMaxScaler
 import os
 import pickle
@@ -73,7 +73,7 @@ h3 {
     border-radius: 20px;
     background-color: #7F7FA4;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    color: #FEFEFF;
+    color: #FEFEFF !important;
     height: 56px;
     padding: 24px;
     display: flex;
@@ -227,40 +227,6 @@ preprocess_data = {
 preprocess_df = pd.DataFrame(preprocess_data)
 st.dataframe(preprocess_df, hide_index=True)
 
-lemmatizer = WordNetLemmatizer()
-punctuations = string.punctuation
-eng_stopwords = set(stopwords.words('english'))
-
-def get_pos(tag):
-    if tag.startswith('J'):
-        return 'a'
-    elif tag.startswith('R'):
-        return 'r'
-    elif tag.startswith('V'):
-        return 'v'
-    else:
-        return 'n'
-
-def lemmatizing(words):
-    tagged = pos_tag(words)
-    lemmatized = [lemmatizer.lemmatize(word, get_pos(tag)) for word, tag in tagged]
-    return lemmatized
-
-def preprocess_cosine_jaccard(text):
-    text = text.lower()
-    tokens = word_tokenize(text)
-    tokens = [token for token in tokens if token not in punctuations and token not in eng_stopwords and not token.isnumeric()]
-    tokens = lemmatizing(tokens)
-    return ' '.join(tokens)
-
-def preprocess_levenshtein_trigram(text):
-    text = text.lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))
-    return text
-
-def preprocess_sbert(text):
-    return text.lower().strip()
-
 st.markdown('<div class="section"></div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle" style="margin-bottom:24px">Feature Engineering</div>', unsafe_allow_html=True)
 
@@ -284,45 +250,6 @@ st.markdown('<div class="text">S-BERT converts sentences or documents into dense
 text1_col = "#1 String"
 text2_col = "#2 String"
 
-def tfidf_cosine(text1, text2):
-    vectorizer = TfidfVectorizer()
-    tfidf = vectorizer.fit_transform([text1, text2])
-    score = cosine_similarity(tfidf[0:1], tfidf[1:2])[0][0]
-    return score
-
-def jaccard_similarity(text1, text2):
-    set1 = set(text1.split())
-    set2 = set(text2.split())
-
-    intersection = len(set1.intersection(set2))
-    union = len(set1.union(set2))
-
-    if union == 0:
-        return 0
-    
-    return intersection / union
-
-def levenshtein_similarity(text1, text2):
-    return Levenshtein.ratio(text1, text2)
-
-def trigram_similarity(text1, text2):
-    grams1 = set(ngrams(text1.split(), 3))
-    grams2 = set(ngrams(text2.split(), 3))
-
-    intersection = len(grams1.intersection(grams2))
-    union = len(grams1.union(grams2))
-
-    return intersection / union if union != 0 else 0
-
-model = SentenceTransformer('all-MiniLM-L6-v2')
-
-def sbert_similarity(text1, text2):
-    emb1 = model.encode(text1, convert_to_tensor=True)
-    emb2 = model.encode(text2, convert_to_tensor=True)
-
-    score = util.cos_sim(emb1, emb2).item()
-    return score
-
 scaler = MinMaxScaler()
 
 if os.path.exists("MSRParaphraseCorpus/msr_paraphrase_train_features.csv"):
@@ -341,9 +268,11 @@ else:
             "trigram_similarity": trigram_similarity(preprocess_levenshtein_trigram(text1), preprocess_levenshtein_trigram(text2)),
             "sbert_similarity": sbert_similarity(preprocess_sbert(text1), preprocess_sbert(text2))
         })
-
+    
     train_feature_df = pd.DataFrame(features)
     train_feature_df = pd.DataFrame(scaler.fit_transform(train_feature_df), columns=train_feature_df.columns)
+    with open("model/scaler.pkl", "wb") as file:
+        pickle.dump(scaler, file)
     train_feature_df.to_csv("MSRParaphraseCorpus/msr_paraphrase_train_features.csv", index=False)
 
 feature_df = pd.concat([train_df['Quality'], train_feature_df], axis=1)
@@ -358,9 +287,7 @@ st.dataframe(label_corr)
 
 st.markdown('<div class="text">The correlation analysis shows that most features have moderate relationships with the target label (Quality), indicating that they provide useful information for distinguishing paraphrase or plagiarism pairs. Among all features, S-BERT Similarity has the highest correlation with the label (0.42), followed by Levenshtein Distance (0.39), while TF-IDF Cosine Similarity and Jaccard Similarity both show similar correlations of around 0.38. These values are not considered too low for text classification tasks, as similarity-based features often have moderate rather than extremely high correlations due to the complexity of language patterns.</div>', unsafe_allow_html=True)
 
-if os.path.exists("MSRParaphraseCorpus/msr_paraphrase_test_features.csv"):
-    test_feature_df = pd.read_csv("MSRParaphraseCorpus/msr_paraphrase_test_features.csv")
-else:
+if not os.path.exists("MSRParaphraseCorpus/msr_paraphrase_test_features.csv"):
     features = []
 
     for _, row in test_df.iterrows():
@@ -378,9 +305,6 @@ else:
     test_feature_df = pd.DataFrame((features))
     test_feature_df = pd.DataFrame(scaler.transform(test_feature_df), columns=test_feature_df.columns)
     test_feature_df.to_csv("MSRParaphraseCorpus/msr_paraphrase_test_features.csv", index=False)
-
-with open("model/scaler.pkl", "wb") as file:
-    pickle.dump(scaler, file)
 
 if st.button("Let's Build The Model"):
     st.switch_page("pages/3_Build_The_Model.py")

@@ -2,7 +2,7 @@ import pickle
 import os
 import pandas as pd
 import streamlit as st
-from preprocess import (
+from preprocessing import (
     preprocess_cosine_jaccard,
     preprocess_levenshtein_trigram,
     preprocess_sbert,
@@ -10,7 +10,8 @@ from preprocess import (
     jaccard_similarity,
     levenshtein_similarity,
     trigram_similarity,
-    sbert_similarity
+    sbert_similarity,
+    extract_features
 )
 
 st.markdown("""
@@ -41,6 +42,38 @@ html, body, h1, h2, h3, p, div, span {
     padding-right: 120px;
     margin: 0;
     max-width: 100%;
+}
+            
+.section {
+    margin-top: 40px;
+}
+            
+.title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 32px;
+    color: #4E4E61;
+}
+
+.subtitle {
+    font-size: 20px;
+    font-weight: 500;
+    color: #4E4E61;
+    margin-bottom: 4px;
+}
+
+.subtitle2{
+    font-size: 16px;
+    font-weight: 500;
+    color: #4E4E61;
+    margin-bottom: 8px;
+}
+
+.text {
+    font-size: 16px;
+    font-weight: 300;
+    color: #4E4E61;
+    margin-bottom: 32px;
 }
             
 .card {
@@ -108,64 +141,26 @@ if st.button('Check Similarity'):
     if not text1.strip() or not text2.strip():
         st.warning('Please enter text in both fields.')
     else:
+        st.markdown('<p style="margin-bottom:24px"></p>', unsafe_allow_html=True)
         with st.spinner('Analyzing similarity...'):
-            model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'model', 'plagiarism_model.pkl')
-            with open(model_path, 'rb') as f:
-                artefacts = pickle.load(f)
-
-            tfidf_vec = artefacts['tfidf_vectoriser']
-            w2v_data = {'vectors': artefacts['w2v_vectors'], 'dim': artefacts['w2v_dim']}
-
-            from preprocessing import extract_features
-            features = extract_features(text1, text2, tfidf_vec, w2v_data)
-
-            scaler = artefacts['scaler']
-            model = artefacts['model']
             model_path = "model/logistic_model.pkl"
             scaler_path = "model/scaler.pkl"
+
             with open(model_path, "rb") as file:
                 model = pickle.load(file)
 
             with open(scaler_path, "rb") as file:
                 scaler = pickle.load(file)
 
-            
-            def extract_features(text1, text2):
-                features = {
-                    "tfidf_cosine": tfidf_cosine(
-                        preprocess_cosine_jaccard(text1),
-                        preprocess_cosine_jaccard(text2)
-                    ),
-                    "jaccard": jaccard_similarity(
-                        preprocess_cosine_jaccard(text1),
-                        preprocess_cosine_jaccard(text2)
-                    ),
-                    "levenshtein": levenshtein_similarity(
-                        preprocess_levenshtein_trigram(text1),
-                        preprocess_levenshtein_trigram(text2)
-                    ),
-                    "trigram_similarity": trigram_similarity(
-                        preprocess_levenshtein_trigram(text1),
-                        preprocess_levenshtein_trigram(text2)
-                    ),
-                    "sbert_similarity": sbert_similarity(
-                        preprocess_sbert(text1),
-                        preprocess_sbert(text2)
-                    )
-                }
-
-                feature_df = pd.DataFrame([features])
-                similarity_score = feature_df.mean(axis=1).iloc[0]
-                feature_scaled = scaler.transform(feature_df)
-
-                return feature_scaled, similarity_score
-
             features, similarity_score = extract_features(text1, text2)
-            prediction = model.predict(features)[0]
-            probability = model.predict_proba(features)[0].max()
+            
+            feature_names = features.columns
+            feature_scaled = scaler.transform(features)
+            feature_scaled_df = pd.DataFrame(feature_scaled, columns=feature_names)
 
-            X_scaled = scaler.transform(features)
-            score = float(model.predict_proba(X_scaled)[0, 1])
+            prediction = model.predict(feature_scaled)[0]
+            probability = model.predict_proba(feature_scaled)[0].max()
+
         st.markdown(f'''
         <div style="
             background: #FEFEFF;
@@ -182,13 +177,18 @@ if st.button('Check Similarity'):
                 Similarity Score
             </p>
             <p style="font-size:56px; font-weight:600; color:#7F7FA4; margin:0">
-                {similarity_score:.2%}%
+                {similarity_score:.2%}
             </p>
-            <p style="font-size:14px; color:#7F7FA4; margin-top:8px">
-                {"Paraphrase detected" if similarity_score >= 0.5 else "Not a paraphrase"}
+            <p style="font-size:20px; color:#7F7FA4; margin-top:8px">
+                {"Paraphrase Detected" if similarity_score >= 0.5 else "Not A Paraphrase"}
             </p>
         </div>
         ''', unsafe_allow_html=True)
+
+        st.markdown('<div class="section"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="subtitle" style="margin-bottom:24px">Similarity Features</div>', unsafe_allow_html=True)
+
+        st.dataframe(feature_scaled_df, hide_index=True)
 
         st.markdown(f"""
         <div class="card" style="margin-top:32px">
