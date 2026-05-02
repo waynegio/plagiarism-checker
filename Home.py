@@ -45,6 +45,10 @@ html, body, h1, h2, h3, p, div, span {
 [data-testid="stVerticalBlock"] {
     align-items: center;
 }
+
+.stApp {
+    background-color: #DEDEE6 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 

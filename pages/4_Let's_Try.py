@@ -45,6 +45,10 @@ html, body, h1, h2, h3, p, div, span {
     align-items: center;
 }
 
+[data-testid="stSpinner"] {
+    color: #7F7FA4;
+}
+
 div[data-testid="stTextArea"] > div {
     background-color: #FEFEFF !important;
     border-radius: 32px !important;
@@ -89,8 +93,12 @@ if st.button('Check Similarity'):
 
             from preprocessing import extract_features
             features = extract_features(text1, text2, tfidf_vec, w2v_data)
-            score = float(features[0].mean())
 
+            scaler = artefacts['scaler']
+            model = artefacts['model']
+
+            X_scaled = scaler.transform(features)
+            score = float(model.predict_proba(X_scaled)[0, 1])
         st.markdown(f'''
         <div style="
             background: #FEFEFF;

@@ -42,6 +42,19 @@ html, body, h1, h2, h3, p, div, span {
 [data-testid="stVerticalBlock"] {
     align-items: end;
 }
+
+.stApp, [data-testid="stAppViewContainer"] {
+    background: #DEDEE6 !important;
+}
+
+p, h1, h2, h3, div, span {
+    color: #4E4E61 !important;
+}
+
+[data-testid="stButton"] button {
+    color: #FEFEFF !important;
+    background-color: #7F7FA4 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
