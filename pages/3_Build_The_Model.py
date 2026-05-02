@@ -95,6 +95,180 @@ html, body, h1, h2, h3, p, div, span {
 p, h1, h2, h3, div, span {
     color: #4E4E61;
 }
+
+/* ── Tooltips ── */
+.tooltip-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.tooltip-wrap .stTooltip {
+    font-size: 12px;
+    color: #8888A0;
+}
+
+/* ── Center success message ── */
+div[data-testid="stSuccess"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+/* ── Fix native Streamlit tooltip overflow ── */
+[data-testid="stTooltipIcon"] {
+    white-space: normal !important;
+    overflow: visible !important;
+}
+[data-testid="stTooltipContent"] {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    max-width: 280px;
+    line-height: 1.4;
+}
+
+/* ── Hover-only info icon tooltip ── */
+.info-icon-wrap {
+    display: inline-block;
+    position: relative;
+    cursor: default;
+}
+.info-icon-wrap .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #C7C7D2;
+    color: #FEFEFF;
+    font-size: 11px;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 1;
+    margin-left: 6px;
+    vertical-align: middle;
+    cursor: help;
+}
+.info-icon-wrap .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4E4E61;
+    color: #FEFEFF;
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 8px;
+    z-index: 999;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    font-family: 'Lexend', sans-serif;
+}
+.info-icon-wrap .tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #4E4E61;
+}
+.info-icon-wrap:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ── Tooltips ── */
+.tooltip-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.tooltip-wrap .stTooltip {
+    font-size: 12px;
+    color: #8888A0;
+}
+
+/* ── Center success message ── */
+div[data-testid="stSuccess"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+/* ── Fix native Streamlit tooltip overflow ── */
+[data-testid="stTooltipIcon"] {
+    white-space: normal !important;
+    overflow: visible !important;
+}
+[data-testid="stTooltipContent"] {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    max-width: 280px;
+    line-height: 1.4;
+}
+
+/* ── Hover-only info icon tooltip ── */
+.info-icon-wrap {
+    display: inline-block;
+    position: relative;
+    cursor: default;
+}
+.info-icon-wrap .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #C7C7D2;
+    color: #FEFEFF;
+    font-size: 11px;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 1;
+    margin-left: 6px;
+    vertical-align: middle;
+    cursor: help;
+}
+.info-icon-wrap .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4E4E61;
+    color: #FEFEFF;
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 8px;
+    z-index: 999;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    font-family: 'Lexend', sans-serif;
+}
+.info-icon-wrap .tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #4E4E61;
+}
+.info-icon-wrap:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -102,12 +276,52 @@ st.set_page_config(page_title='Model Train and Evaluation', page_icon='🖥️')
 
 st.markdown('<div class="title">🖥️ Model Train and Evaluation</div>', unsafe_allow_html=True)
 
-model_path = "model/logistic_model.pkl"
+# ── Hyperparameter inputs ──────────────────────────────────────────────
+def info_icon(label, description, min_val=None, max_val=None):
+    tooltip = description
+    if min_val is not None and max_val is not None:
+        tooltip = f"{description}<br>Range: {min_val} - {max_val}"
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;margin-bottom:4px;">
+        <span style="font-size:14px;font-weight:500;">{label}</span>
+        <div class="info-icon-wrap">
+            <span class="info-icon">i</span>
+            <span class="tooltip-text" style="background-color: white; color: rgb(127, 127, 164);">{tooltip}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+col_param1, col_param2 = st.columns(2)
+
+with col_param1:
+    info_icon("Regularization (C)", "Smaller = stronger regularisation", 0.01, 10.0)
+    C = st.slider("", min_value=0.01, max_value=10.0, value=1.0, step=0.01, label_visibility="collapsed")
+
+st.markdown('<p style="margin-bottom:12px"></p>', unsafe_allow_html=True)
+
+col_param3, col_param4, col_param5 = st.columns(3)
+
+with col_param3:
+    info_icon("Solver", "Algorithm for optimisation")
+    solver = st.selectbox("", ["lbfgs", "liblinear", "saga"], index=0, label_visibility="collapsed")
+
+with col_param4:
+    info_icon("Random State", "Seed for reproducibility")
+    random_state = st.number_input("", value=42, step=1, label_visibility="collapsed")
+
+with col_param5:
+    info_icon("Max Iterations", "Max solver convergence iterations")
+    max_iter = st.number_input("", value=1000, step=100, label_visibility="collapsed")
+
+st.markdown("---")
 
 X_train = train_features_df.drop(columns=["Quality"])
 y_train = train_features_df["Quality"]
 X_test = test_features_df.drop(columns=["Quality"])
 y_test = test_features_df["Quality"]
+
+model_path = "model/logistic_model.pkl"
 
 if os.path.exists(model_path):
     with st.spinner("Loading model..."):
@@ -134,12 +348,12 @@ if os.path.exists(model_path):
 else:
     with st.spinner("Training and saving model..."):
         model = LogisticRegression(
-            random_state=42,
-            max_iter=1000
+            random_state=random_state,
+            max_iter=max_iter,
+            solver=solver,
+            C=C,
         )
-
         model.fit(X_train, y_train)
-
         with open(model_path, "wb") as file:
             pickle.dump(model, file)
 
@@ -167,6 +381,22 @@ cm = confusion_matrix(y_test, y_pred)
 
 st.markdown('<div class="section"></div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle" style="margin-bottom:24px">Model Evaluation Metrics</div>', unsafe_allow_html=True)
+
+st.markdown(f"""
+<div style="
+    display: inline-block;
+    background: #7F7FA4;
+    color: #FEFEFF;
+    border-radius: 16px;
+    padding: 12px 32px;
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 24px;
+">
+    Accuracy: {accuracy*100:.1f}%
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown(f"""<div class="info">Classification Report:</div>""", unsafe_allow_html=True)
 st.code(report, language="text")
