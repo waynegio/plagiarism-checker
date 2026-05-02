@@ -13,8 +13,10 @@ from sentence_transformers import SentenceTransformer, util
 from nltk.util import ngrams
 from sklearn.preprocessing import MinMaxScaler
 import os
+import pickle
 
-df = pd.read_excel('./MSRParaphraseCorpus/msr_paraphrase_train.xlsx')
+train_df = pd.read_excel('./MSRParaphraseCorpus/msr_paraphrase_train.xlsx')
+test_df = pd.read_excel('./MSRParaphraseCorpus/msr_paraphrase_test.xlsx')
 
 st.markdown("""
 <style>
@@ -135,7 +137,7 @@ with col1:
     st.markdown(f"""
     <div class="card">
         <p style="font-size:14px; color:#7E7E84; margin:0;">Total Data</p>
-        <p style="font-size:32px; margin:5px 0 0 0;">{len(df)}</p>
+        <p style="font-size:32px; margin:5px 0 0 0;">{len(train_df)}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -143,12 +145,12 @@ with col2:
     st.markdown(f"""
     <div class="card">
         <p style="font-size:14px; color:#7E7E84; margin:0;">Columns</p>
-        <p style="font-size:32px; margin:5px 0 0 0;">{len(df.columns)}</p>
+        <p style="font-size:32px; margin:5px 0 0 0;">{len(train_df.columns)}</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    missing = df.isnull().sum().sum()
+    missing = train_df.isnull().sum().sum()
     st.markdown(f"""
     <div class="card">
         <p style="font-size:14px; color:#7E7E84; margin:0;">Missing Values</p>
@@ -162,20 +164,20 @@ st.markdown('<div class="subtitle" style="margin-bottom:24px">Data Quality Check
 col4, col5 = st.columns(2)
 
 with col4:
-    st.markdown(f"""<div class="info">Duplicate Rows: {df.duplicated().sum()}</div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="info">Duplicate Rows: {train_df.duplicated().sum()}</div>""", unsafe_allow_html=True)
 
 with col5:
-    st.markdown(f"""<div class="info">Duplicate Columns: {df.columns.duplicated().sum()}</div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="info">Duplicate Columns: {train_df.columns.duplicated().sum()}</div>""", unsafe_allow_html=True)
 
 st.markdown('<div class="section"></div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle" style="margin-bottom:24px">Dataset Preview</div>', unsafe_allow_html=True)
 
-st.dataframe(df, width='stretch')
+st.dataframe(train_df, width='stretch')
 
 st.markdown('<div class="section"></div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle" style="margin-bottom:24px">Label Distribution</div>', unsafe_allow_html=True)
 
-label_counts = df["Quality"].value_counts()
+label_counts = train_df["Quality"].value_counts()
 
 fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -308,12 +310,14 @@ def sbert_similarity(text1, text2):
     score = util.cos_sim(emb1, emb2).item()
     return score
 
+scaler = MinMaxScaler()
+
 if os.path.exists("MSRParaphraseCorpus/msr_paraphrase_train_features.csv"):
-    feature_df = pd.read_csv("MSRParaphraseCorpus/msr_paraphrase_train_features.csv")
+    train_feature_df = pd.read_csv("MSRParaphraseCorpus/msr_paraphrase_train_features.csv")
 else:
     features = []
 
-    for _, row in df.iterrows():
+    for _, row in train_df.iterrows():
         text1 = str(row[text1_col])
         text2 = str(row[text2_col])
 
@@ -325,11 +329,11 @@ else:
             "sbert_similarity": sbert_similarity(preprocess_sbert(text1), preprocess_sbert(text2))
         })
 
-    scaler = MinMaxScaler()
-    feature_df = pd.DataFrame(scaler.fit_transform(features))
-    feature_df.to_csv("MSRParaphraseCorpus/msr_paraphrase_train_features.csv", index=False)
+    train_feature_df = pd.DataFrame(features)
+    train_feature_df = pd.DataFrame(scaler.fit_transform(train_feature_df), columns=train_feature_df.columns)
+    train_feature_df.to_csv("MSRParaphraseCorpus/msr_paraphrase_train_features.csv", index=False)
 
-feature_df = pd.concat([df['Quality'], feature_df], axis=1)
+feature_df = pd.concat([train_df['Quality'], train_feature_df], axis=1)
 st.dataframe(feature_df.head(10))
 
 st.markdown('<div class="section"></div>', unsafe_allow_html=True)
@@ -340,6 +344,30 @@ label_corr = corr['Quality'].drop('Quality')
 st.dataframe(label_corr)
 
 st.markdown('<div class="text">The correlation analysis shows that most features have moderate relationships with the target label (Quality), indicating that they provide useful information for distinguishing paraphrase or plagiarism pairs. Among all features, S-BERT Similarity has the highest correlation with the label (0.42), followed by Levenshtein Distance (0.39), while TF-IDF Cosine Similarity and Jaccard Similarity both show similar correlations of around 0.38. These values are not considered too low for text classification tasks, as similarity-based features often have moderate rather than extremely high correlations due to the complexity of language patterns.</div>', unsafe_allow_html=True)
+
+if os.path.exists("MSRParaphraseCorpus/msr_paraphrase_test_features.csv"):
+    test_feature_df = pd.read_csv("MSRParaphraseCorpus/msr_paraphrase_test_features.csv")
+else:
+    features = []
+
+    for _, row in test_df.iterrows():
+        text1 = str(row[text1_col])
+        text2 = str(row[text2_col])
+
+        features.append({
+            "tfidf_cosine": tfidf_cosine(preprocess_cosine_jaccard(text1), preprocess_cosine_jaccard(text2)),
+            "jaccard": jaccard_similarity(preprocess_cosine_jaccard(text1), preprocess_cosine_jaccard(text2)),
+            "levenshtein": levenshtein_similarity(preprocess_levenshtein_trigram(text1), preprocess_levenshtein_trigram(text2)),
+            "trigram_similarity": trigram_similarity(preprocess_levenshtein_trigram(text1), preprocess_levenshtein_trigram(text2)),
+            "sbert_similarity": sbert_similarity(preprocess_sbert(text1), preprocess_sbert(text2))
+        })
+
+    test_feature_df = pd.DataFrame((features))
+    test_feature_df = pd.DataFrame(scaler.transform(test_feature_df), columns=test_feature_df.columns)
+    test_feature_df.to_csv("MSRParaphraseCorpus/msr_paraphrase_test_features.csv", index=False)
+
+with open("model/scaler.pkl", "wb") as file:
+    pickle.dump(scaler, file)
 
 if st.button("Let's Build The Model"):
     st.switch_page("pages/3_Build_The_Model.py")
