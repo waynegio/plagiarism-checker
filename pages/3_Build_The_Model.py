@@ -93,12 +93,7 @@ html, body, h1, h2, h3, p, div, span {
 }
 
 p, h1, h2, h3, div, span {
-    color: #4E4E61 !important;
-}
-
-[data-testid="stButton"] button {
-    color: #FEFEFF !important;
-    background-color: #7F7FA4 !important;
+    color: #4E4E61;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -119,7 +114,22 @@ if os.path.exists(model_path):
         with open(model_path, "rb") as file:
             model = pickle.load(file)
 
-    st.success("Model loaded successfully!")
+    st.markdown(f'''
+    <div style="
+        background: #FEFEFF;
+        border: 1px solid #C7C7D2;
+        border-radius: 24px;
+        padding: 24px;
+        margin-top: 8px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    ">
+        <p style="font-size:20px; color:#7F7FA4">
+            Model loaded successfully!
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
 
 else:
     with st.spinner("Training and saving model..."):
@@ -133,7 +143,22 @@ else:
         with open(model_path, "wb") as file:
             pickle.dump(model, file)
 
-    st.success("Model trained and saved successfully!")
+    st.markdown(f'''
+    <div style="
+        background: #FEFEFF;
+        border: 1px solid #C7C7D2;
+        border-radius: 24px;
+        padding: 24px;
+        margin-top: 8px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    ">
+        <p style="font-size:20px; color:#7F7FA4">
+            Model trained and saved successfully!
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
 
 y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
