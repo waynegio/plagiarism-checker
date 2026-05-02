@@ -2,6 +2,8 @@
 
 A web-based plagiarism checker built with Python and Streamlit using the MSR Paraphrase Corpus dataset. This project analyzes whether two sentences are paraphrases (have similar meaning) or not.
 
+**Live Demo:** [https://paircheck.streamlit.app/](https://paircheck.streamlit.app/)
+
 ---
 
 ## Installation Guide
