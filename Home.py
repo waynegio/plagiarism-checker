@@ -1,4 +1,8 @@
 import streamlit as st
+import nltk
+
+nltk.download('stopwords')
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
@@ -40,6 +44,10 @@ html, body, h1, h2, h3, p, div, span {
 
 [data-testid="stVerticalBlock"] {
     align-items: center;
+}
+
+.stApp {
+    background-color: #DEDEE6 !important;
 }
 </style>
 """, unsafe_allow_html=True)

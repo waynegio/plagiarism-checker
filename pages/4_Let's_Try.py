@@ -70,6 +70,10 @@ html, body, h1, h2, h3, p, div, span {
     align-items: center;
 }
 
+[data-testid="stSpinner"] {
+    color: #7F7FA4;
+}
+
 div[data-testid="stTextArea"] > div {
     background-color: #FEFEFF !important;
     border-radius: 32px !important;
@@ -105,6 +109,18 @@ if st.button('Check Similarity'):
         st.warning('Please enter text in both fields.')
     else:
         with st.spinner('Analyzing similarity...'):
+            model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'model', 'plagiarism_model.pkl')
+            with open(model_path, 'rb') as f:
+                artefacts = pickle.load(f)
+
+            tfidf_vec = artefacts['tfidf_vectoriser']
+            w2v_data = {'vectors': artefacts['w2v_vectors'], 'dim': artefacts['w2v_dim']}
+
+            from preprocessing import extract_features
+            features = extract_features(text1, text2, tfidf_vec, w2v_data)
+
+            scaler = artefacts['scaler']
+            model = artefacts['model']
             model_path = "model/logistic_model.pkl"
             scaler_path = "model/scaler.pkl"
             with open(model_path, "rb") as file:
@@ -148,6 +164,8 @@ if st.button('Check Similarity'):
             prediction = model.predict(features)[0]
             probability = model.predict_proba(features)[0].max()
 
+            X_scaled = scaler.transform(features)
+            score = float(model.predict_proba(X_scaled)[0, 1])
         st.markdown(f'''
         <div style="
             background: #FEFEFF;
