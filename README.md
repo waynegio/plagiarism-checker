@@ -33,15 +33,15 @@ Open the link shown in the terminal (usually **http://localhost:8501**) in your 
 
 ## Project Structure
 
-| File / Folder | Description |
-|---|---|
-| `Home.py` | Main entry point for the Streamlit app |
-| `model/train.py` | Training pipeline for the plagiarism model |
-| `model/plagiarism_model.pkl` | Trained model (auto-generated after training) |
-| `model/logistic_model.pkl` | Logistic Regression model for similarity check |
-| `preprocessing.py` | Feature extraction and text cleaning functions |
-| `MSRParaphraseCorpus/` | Dataset containing training and test data |
-| `pages/` | Additional Streamlit pages (model training UI, similarity checker) |
+| File / Folder                | Description                                                        |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `Home.py`                    | Main entry point for the Streamlit app                             |
+| `model/train.py`             | Training pipeline for the plagiarism model                         |
+| `model/plagiarism_model.pkl` | Trained model (auto-generated after training)                      |
+| `model/logistic_model.pkl`   | Logistic Regression model for similarity check                     |
+| `preprocessing.py`           | Feature extraction and text cleaning functions                     |
+| `MSRParaphraseCorpus/`       | Dataset containing training and test data                          |
+| `pages/`                     | Additional Streamlit pages (model training UI, similarity checker) |
 
 ---
 
