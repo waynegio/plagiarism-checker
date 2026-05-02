@@ -316,37 +316,18 @@ with col_param5:
 
 st.markdown("---")
 
-X_train = train_features_df.drop(columns=["Quality"])
-y_train = train_features_df["Quality"]
-X_test = test_features_df.drop(columns=["Quality"])
-y_test = test_features_df["Quality"]
+st.markdown('<p style="margin-bottom:8px"></p>', unsafe_allow_html=True)
 
-model_path = "model/logistic_model.pkl"
+trained = False
+message = ""
 
-if os.path.exists(model_path):
-    with st.spinner("Loading model..."):
-        with open(model_path, "rb") as file:
-            model = pickle.load(file)
+if st.button("Train Model"):
+    with st.spinner("Training model..."):
+        X_train = train_features_df.drop(columns=["Quality"])
+        y_train = train_features_df["Quality"]
+        X_test  = test_features_df.drop(columns=["Quality"])
+        y_test  = test_features_df["Quality"]
 
-    st.markdown(f'''
-    <div style="
-        background: #FEFEFF;
-        border: 1px solid #C7C7D2;
-        border-radius: 24px;
-        padding: 24px;
-        margin-top: 8px;
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center;
-    ">
-        <p style="font-size:20px; color:#7F7FA4">
-            Model loaded successfully!
-        </p>
-    </div>
-    ''', unsafe_allow_html=True)
-
-else:
-    with st.spinner("Training and saving model..."):
         model = LogisticRegression(
             random_state=random_state,
             max_iter=max_iter,
@@ -354,8 +335,53 @@ else:
             C=C,
         )
         model.fit(X_train, y_train)
-        with open(model_path, "wb") as file:
-            pickle.dump(model, file)
+        with open("model/logistic_model.pkl", "wb") as f:
+            pickle.dump(model, f)
+
+        with open("model/scaler.pkl", "wb") as f:
+            from sklearn.preprocessing import StandardScaler
+            scaler = StandardScaler()
+            scaler.fit(X_train)
+            pickle.dump(scaler, f)
+        
+        y_pred = model.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        report   = classification_report(y_test, y_pred, output_dict=True)
+        cm       = confusion_matrix(y_test, y_pred)
+        trained = True
+    message = "Model successfully trained."
+    st.markdown(f'''
+    <div style="
+        background: #FEFEFF;
+        border: 1px solid #C7C7D2;
+        border-radius: 24px;
+        padding: 24px;
+        margin-top: 8px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    ">
+        <p style="font-size:20px; color:#7F7FA4">
+            {message}
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
+
+elif os.path.exists("model/logistic_model.pkl"):
+    message = "Model loaded from file."
+    with st.spinner("Loading saved model..."):
+        with open("model/logistic_model.pkl", "rb") as f:
+            model = pickle.load(f)
+
+        X_train = train_features_df.drop(columns=["Quality"])
+        y_train = train_features_df["Quality"]
+        X_test  = test_features_df.drop(columns=["Quality"])
+        y_test  = test_features_df["Quality"]
+
+        y_pred = model.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        report   = classification_report(y_test, y_pred, output_dict=True)
+        cm       = confusion_matrix(y_test, y_pred)
 
     st.markdown(f'''
     <div style="
@@ -369,46 +395,43 @@ else:
         text-align: center;
     ">
         <p style="font-size:20px; color:#7F7FA4">
-            Model trained and saved successfully!
+            {message}
         </p>
     </div>
     ''', unsafe_allow_html=True)
+    trained = True
 
-y_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-cm = confusion_matrix(y_test, y_pred)
+if trained:
+    st.markdown('<div class="section"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle" style="margin-bottom:24px">Model Evaluation Metrics</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="section"></div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle" style="margin-bottom:24px">Model Evaluation Metrics</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style="
+        display: inline-block;
+        background: #7F7FA4;
+        color: #FEFEFF;
+        border-radius: 16px;
+        padding: 12px 32px;
+        font-size: 20px;
+        font-weight: 500;
+        text-align: center;
+        margin-bottom: 24px;
+    ">
+        Accuracy: {accuracy*100:.1f}%
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown(f"""
-<div style="
-    display: inline-block;
-    background: #7F7FA4;
-    color: #FEFEFF;
-    border-radius: 16px;
-    padding: 12px 32px;
-    font-size: 20px;
-    font-weight: 500;
-    text-align: center;
-    margin-bottom: 24px;
-">
-    Accuracy: {accuracy*100:.1f}%
-</div>
-""", unsafe_allow_html=True)
+    st.markdown('<div class="subtitle2" style="margin-bottom:8px">Classification Report</div>', unsafe_allow_html=True)
+    cr_df = pd.DataFrame(report).transpose()
+    st.dataframe(cr_df, use_container_width=True)
 
-st.markdown(f"""<div class="info">Classification Report:</div>""", unsafe_allow_html=True)
-st.code(report, language="text")
+    st.markdown('<div class="subtitle2" style="margin-bottom:8px;margin-top:16px">Confusion Matrix</div>', unsafe_allow_html=True)
+    cm_df = pd.DataFrame(
+        cm,
+        index=["Actual Negative", "Actual Positive"],
+        columns=["Predicted Negative", "Predicted Positive"]
+    )
+    st.dataframe(cm_df, use_container_width=True)
 
-st.markdown(f"""<div class="info">Confusion Matrix:</div>""", unsafe_allow_html=True)
-cm_df = pd.DataFrame(
-    cm,
-    index=["Actual Negative", "Actual Positive"],
-    columns=["Predicted Negative", "Predicted Positive"]
-)
-
-st.dataframe(cm_df, use_container_width=True)
-
-if st.button("Let's Try"):
-    st.switch_page("pages/4_Let's_Try.py")
+    if st.button("Let's Try"):
+        st.switch_page("pages/4_Let's_Try.py")

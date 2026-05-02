@@ -2,6 +2,8 @@ import streamlit as st
 import nltk
 
 nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger_eng')
+nltk.download('wordnet')
 
 st.markdown("""
 <style>
