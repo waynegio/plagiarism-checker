@@ -1,4 +1,7 @@
 import streamlit as st
+import nltk
+
+nltk.download('stopwords')
 
 st.markdown("""
 <style>
