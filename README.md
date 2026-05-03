@@ -11,7 +11,7 @@ A web-based plagiarism checker built with Python and Streamlit using the MSR Par
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/waynegio/plagiarism-checker.git
 cd plagiarism-checker
 ```
 
